@@ -12,14 +12,14 @@ export default function StageLogits({ tokens }) {
   }
 
   const lastToken = tokens[tokens.length - 1];
-  const logits = getLogits(lastToken.text);
+  const logits = getLogits(lastToken);
   const maxProb = Math.max(...logits.map(l => l.prob));
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-400">
         After passing through the transformer layers, the final hidden state is projected to a
-        <span className="text-orange font-semibold"> logit vector</span> over the full vocabulary (~50k tokens).
+        <span className="text-orange font-semibold"> logit vector</span> over the full vocabulary (~100k tokens for cl100k_base).
         We show the <span className="text-emerald-400 font-semibold">top 3</span> predicted next tokens after softmax.
       </p>
 
@@ -53,11 +53,10 @@ export default function StageLogits({ tokens }) {
         </div>
         {logits.map((item, i) => (
           <motion.div
-            key={item.word}
-            initial={{ opacity: 0, y: 20 }}
+            key={`${item.word}-${i}`}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.12, type: 'spring', stiffness: 200 }}
-            className="relative"
+            transition={{ delay: i * 0.1, duration: 0.4, ease: 'easeOut' }}
           >
             <div className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
               {/* Rank badge */}
@@ -71,12 +70,17 @@ export default function StageLogits({ tokens }) {
                 {i + 1}
               </div>
 
-              {/* Token */}
-              <span className="font-mono font-bold text-base w-24 shrink-0"
-                style={{ color: i === 0 ? '#ffad11' : '#e2e8f0' }}
-              >
-                "{item.word}"
-              </span>
+              {/* Token text + id */}
+              <div className="flex flex-col w-28 shrink-0">
+                <span className="font-mono font-bold text-base truncate"
+                  style={{ color: i === 0 ? '#ffad11' : '#e2e8f0' }}
+                >
+                  "{item.word}"
+                </span>
+                {item.id !== undefined && (
+                  <span className="text-[10px] text-slate-600 mono">#{item.id}</span>
+                )}
+              </div>
 
               {/* Bar */}
               <div className="flex-1 h-3 bg-slate-800 rounded-full overflow-hidden">
@@ -84,7 +88,7 @@ export default function StageLogits({ tokens }) {
                   className="h-full rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${(item.prob / maxProb) * 100}%` }}
-                  transition={{ duration: 0.7, delay: i * 0.12, ease: 'easeOut' }}
+                  transition={{ duration: 0.7, delay: i * 0.1, ease: 'easeOut' }}
                   style={{
                     background: i === 0
                       ? 'linear-gradient(90deg, #ffad11, #f59e0b)'
@@ -108,7 +112,8 @@ export default function StageLogits({ tokens }) {
 
       {/* Info note */}
       <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-xs text-slate-500 leading-relaxed">
-        💡 In a real model like GPT-2, the full logit vector has <span className="text-slate-400">50,257</span> entries — one per vocabulary token.
+        💡 In GPT-4 (cl100k_base), the full logit vector has{' '}
+        <span className="text-slate-400">~100,000</span> entries — one per vocabulary token.
         Temperature and sampling strategies (top-k, nucleus) are applied before generation.
       </div>
     </div>

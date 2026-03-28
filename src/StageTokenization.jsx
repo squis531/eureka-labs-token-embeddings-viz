@@ -50,8 +50,8 @@ export default function StageTokenization({ tokens }) {
       {/* Info row */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
         <StatCard label="Total Tokens" value={tokens.length} color="var(--orange)" />
-        <StatCard label="Vocab Source" value="minBPE" color="#818cf8" />
-        <StatCard label="Encoding" value="UTF-8" color="#34d399" />
+        <StatCard label="Vocab Source" value="cl100k_base" color="#818cf8" />
+        <StatCard label="Encoding" value="BPE/UTF-8" color="#34d399" />
       </div>
     </div>
   );

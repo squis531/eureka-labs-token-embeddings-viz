@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Cpu, Hash, Grid3x3, GitBranch, BarChart2, BookOpen,
@@ -19,7 +19,7 @@ const STAGES = [
     short: 'Tokens',
     icon: Hash,
     color: '#ffad11',
-    desc: 'Text → Token IDs via BPE',
+    desc: 'Text → Token IDs via cl100k_base',
   },
   {
     id: 1,
@@ -52,14 +52,16 @@ const STAGES = [
 
 export default function App() {
   const [input, setInput] = useState('AI is simple');
-  const [committed, setCommitted] = useState('AI is simple');
   const [tokens, setTokens] = useState(() => tokenize('AI is simple'));
   const [stage, setStage] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Live preview token count — memoised so tokenize() only re-runs when input changes
+  const previewCount = useMemo(() => tokenize(input).length, [input]);
+
   const handleVisualize = useCallback(() => {
-    setCommitted(input);
-    setTokens(tokenize(input));
+    const newTokens = tokenize(input);
+    setTokens(newTokens);
     setStage(0);
   }, [input]);
 
@@ -166,7 +168,7 @@ export default function App() {
           />
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800">
             <span className="text-xs text-slate-600">
-              {input.length} chars · {tokenize(input).length} tokens (preview)
+              {input.length} chars · {previewCount} tokens (cl100k_base)
             </span>
             <button
               onClick={handleVisualize}
@@ -265,10 +267,10 @@ export default function App() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={stage}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25 }}
+                  initial={{ opacity: 0, x: 18, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: -18, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                 >
                   <StageComponent tokens={tokens} />
                 </motion.div>
@@ -336,7 +338,7 @@ export default function App() {
         )}
 
         {/* ── Footer ── */}
-        <footer className="text-center pb-8 space-y-1">
+        <footer className="text-center pb-8">
           <div className="text-xs text-slate-600">
             Built with{' '}
             <span style={{ color: '#ffad11' }}>♥</span>{' '}
@@ -345,9 +347,11 @@ export default function App() {
               className="hover:underline" style={{ color: '#ffad11' }}>
               Andrej Karpathy's LLM101n
             </a>
-          </div>
-          <div className="text-xs text-slate-700">
-            All token IDs and embeddings are mock values for educational purposes
+            {' '}· Powered by{' '}
+            <a href="https://github.com/niieani/gpt-tokenizer" target="_blank" rel="noreferrer"
+              className="hover:underline" style={{ color: '#818cf8' }}>
+              gpt-tokenizer
+            </a>
           </div>
         </footer>
       </main>
